@@ -48,3 +48,75 @@ const RegisteredHospital=new mongoose.Schema({
 });
 const hospitallist=mongoose.model("hospitallist",RegisteredHospital);
 const user=mongoose.model("user",userSchema);
+const vonage=new Vonage({
+  apiKey:process.env.VONAGE_API_KEY,
+  apiSecret:process.env.VONAGE_API_SECRET
+})
+app.get("/",(req,res)=>{
+  res.render("home");
+});
+app.get("/service",(req,res)=>{
+  res.render("service");
+})
+app.get("/features",(req,res)=>{
+  res.render("features");
+})
+app.get("/aboutUs",(req,res)=>{
+  res.render("aboutus");
+})
+app.get("/contactus",(req,res)=>{
+  res.render("contactus");
+})
+app.get("/book",(req,res)=>{
+  res.render("bookNow");
+});
+app.post("/message",(req,res)=>{
+  const name=req.body.name;
+  const email=req.body.email;
+  const msg=req.body.msg;
+  const transporter=nodemailer.createTransport({
+    service:'gmail',
+    auth:{
+      user:process.env.NODEMAILER_EMAIL,
+      pass:process.env.NODEMAILER_PASS
+    },
+    port:465,
+    host:'smtp.gmail.com'
+  });
+  const mailOption1={
+    from:process.env.NODEMAILER_EMAIL,
+    to:`${email}`,
+    subject:"Ambulance Tracker customer care",
+    text:"Thanks For Contacting Us "+`${name}`
+  };
+  const mailOption2={
+    from:process.env.NODEMAILER_EMAIL,
+    to:process.env.SECOND_EMAIL,
+    subject:`${name}`,
+    text:"name:- "+`${name}`+"\n email:- "+`${email}`+"\n message:- "+`${msg}`
+  }
+  transporter.sendMail(mailOption1,(error,info)=>{
+    if(error){
+      console.log(error);
+      res.send("error sending email");
+    }else{
+      res.send("email sent succesfully");
+    }
+  });
+  transporter.sendMail(mailOption2,(error,info)=>{
+    if(error){
+      console.log(error);
+      res.send("error sending email");
+    }else{
+      res.send("email sent successfully");
+    }
+  });
+  user.findOne({email:email}).then(function(elem){
+    if(!elem){
+      const newUser=new user({
+        name:name,
+        email:email
+      })
+    }
+  })
+})
