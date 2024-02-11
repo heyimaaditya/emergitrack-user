@@ -180,3 +180,77 @@ app.post("/verify",(req,res)=>{
     }
   }
 });
+app.post("/location",async(req,res)=>{
+  try{
+  var latitude;
+  var longitude;
+  var userName=req.body.userName;
+  var phoneNumber=req.body.phoneNumber;
+  var state=req.body.state;
+  var city=req.body.city;
+  var apiUrl = "https://nominatim.openstreetmap.org/search";
+  var params = {
+      q: city + ", " + state,
+      format: "json",
+      limit: 1
+  };
+
+  var queryString = Object.keys(params).map(function(key) {
+      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+  }).join("&");
+
+  var url = apiUrl + "?" + queryString;
+
+  var response=await fetch(url);
+  const data=await response.json();
+
+      if (data.length > 0) {
+          latitude = data[0].lat;
+          longitude = data[0].lon;
+          
+      } else {
+          console.log("Coordinates not found for the specified location.");
+      }
+
+       function hospitalCall(){
+          const options = {
+              method: 'GET',
+              hostname: 'api.foursquare.com',
+              port: null,
+              path: '/v3/places/search?ll='+latitude+'%2C'+longitude+'&radius=100000&categories=15000&limit=50',
+              headers: {
+                accept: 'application/json',
+                Authorization: process.env.FOURSQUARE_AUTH
+              }
+            };
+          
+            const apiRequest = http.request(options, function (apiResponse) {
+              let responseBody = '';
+          
+              apiResponse.on('data', function (chunk) {
+                responseBody += chunk;
+              });
+          
+              apiResponse.on('end', function () {
+                const data = JSON.parse(responseBody);
+                const hospitals = data['results'];
+                const filteredHospitals = hospitals.map(hospital => {
+                  return {
+                    name: hospital['name'],
+                    address : hospital['location']['formatted_address']
+                  };
+                });
+                res.render("hospital",{hospital:filteredHospitals,userName:userName,phoneNumber:phoneNumber});
+              });
+            });
+          
+            apiRequest.end();
+      }
+      hospitalCall();
+  
+
+  }catch(error){
+      console.log("An error occured: "+error);
+  }
+  
+});
