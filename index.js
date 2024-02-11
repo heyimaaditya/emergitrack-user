@@ -116,7 +116,43 @@ app.post("/message",(req,res)=>{
       const newUser=new user({
         name:name,
         email:email
-      })
+      });
+      newUser.save();
     }
-  })
+  }).catch((err)=>{
+    console.log(err);
+  });
+  res.render("message");
+});
+
+
+app.post("/book",(req,res)=>{
+  var number=req.body.phone;
+  var username=req.body.username;
+  //check  if sms has already been sent for this session
+  if(req.session.smsSent){
+    res.render("verify",{number:number,username:username,code:req.session.code});
+  }else{
+    var code=Math.floor(Math.random()*999999);
+    const from = "Vonage APIs"
+    const to ="+91"+number;
+    const text='hlo' + username + "this is your verification code:- "+code;
+    async function sendSMS(){
+      await vonage.sms.send({
+        to,from,text
+      }).then(resp=>{
+        console.log('Message sent successfully');
+        console.log(resp);
+        res.session.smsSent=true;
+        req.session.code=code;
+        res.render("verify",{number:number,username:username,code:code});
+      }).catch(err=>{
+        console.log('There was an error sending the messages.');
+        console.error(err);
+        res.render("error",{error:err});
+      });
+
+    }
+    sendSMS();
+  }
 })
