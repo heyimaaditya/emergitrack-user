@@ -155,4 +155,28 @@ app.post("/book",(req,res)=>{
     }
     sendSMS();
   }
-})
+});
+app.post("/verify",(req,res)=>{
+  var userName=req.body.userName;
+  var phoneNumber=req.body.phoneNumber;
+  var enterCode=req.body.code;
+  var code=req.body.realCode;
+  var count=0;
+  if(enterCode==code){
+    var allState=(State.getStatesOfCountry("IN"));
+    var allCities={};
+    for(var i=0;i<allState.length;i++){
+      var city=City.getCitiesOfState("IN",allState[i].isoCode);
+      allCities[allState[i].name]=city;
+    }
+    var allCitiesString=JSON.stringify(allCities);
+    res.render("location",{allState:allState,allCitiesString:allCitiesString,userName:userName,phoneNumber:phoneNumber});
+  }else{
+    count++;
+    if(count==3){
+      res.redirect("/book");
+    }else{
+      res.render("verify",{Username:userName,number:phoneNumber});
+    }
+  }
+});
