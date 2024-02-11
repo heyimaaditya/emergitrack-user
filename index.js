@@ -20,3 +20,31 @@ app.use(session({
   saveUninitialized:true
 }));
 mongoose.connect("mongodb+srv://aadityatyagi975:"+process.env.ATLAS_PASS+"@cluster0.n76ryam.mongodb.net/emergitrack",{useNewUrlParser:true});
+const userSchema=new mongoose.Schema({
+  name:String,
+  email:String
+
+});
+const RegisteredHospital=new mongoose.Schema({
+  hospitalName:String,
+  hospitalAddress:String,
+  password:String,
+  patient:[{
+    patientName:String,
+    patientNum:String,
+    patientAddress:String,
+    patientStatus:String,
+    ambuTrack:String
+  }],
+  driver:[{
+    driverName:String,
+    driverNum:String,
+    driverId:String,
+    driverPass:String,
+    driverStatus:String,
+    patientAssign:String
+  
+  }]
+});
+const hospitallist=mongoose.model("hospitallist",RegisteredHospital);
+const user=mongoose.model("user",userSchema);
